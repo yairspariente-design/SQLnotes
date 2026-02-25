@@ -1,0 +1,2 @@
+# SQLnotes
+sql queries , diverse
