@@ -1,0 +1,29 @@
+-- שאילתה למציאת המכונות הכי יעילות במפעל
+SELECT
+Machine_ID, AVG(Efficiency_Score) AS avgScore
+FROM Production_Logs
+GROUP BY Machine_ID
+HAVING AVG(Efficiency_Score) >= 85;
+
+-- שאילתה לחיבור נתוני ייצור עם סוג המכונה (JOIN)
+SELECT
+P.Batch_ID, M.Machine_Type
+FROM Production P
+JOIN Machines M ON P.Machine_ID = M.Machine_ID;
+
+-- דוח ביצועי מכונות: סיכום ייצור, אחוז פגומים ודירוג איכות
+SELECT 
+    M.ModelName, 
+    SUM(P.Units_Produced) AS Total_Produced,
+    -- חישוב אחוז הפגומים (הכפלה ב-1.0 למניעת עיגול מספרים שלמים)
+    SUM(P.Scrap_Units) * 1.0 / SUM(P.Units_Produced) AS Scrap_Rate,
+    -- דירוג המכונות לפי כמות היחידות התקינות (ייצור פחות פגומים)
+    DENSE_RANK() OVER (ORDER BY (SUM(P.Units_Produced) - SUM(P.Scrap_Units)) DESC) AS Efficiency_Rank
+FROM Machines M
+JOIN Production_Log P ON M.MachineID = P.MachineID
+GROUP BY M.MachineID, M.ModelName
+ORDER BY Total_Produced DESC;
+
+
+
+
