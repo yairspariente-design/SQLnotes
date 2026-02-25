@@ -12,6 +12,17 @@ P.Batch_ID, M.Machine_Type
 FROM Production P
 JOIN Machines M ON P.Machine_ID = M.Machine_ID;
 //3
+-- נקבץ יח' שיוצרו לפי יום במפעל
+SELECT p.WorkDate, SUM(p.Units_Produced)
+FROM Production_Log p
+GROUP BY p.WorkDate
+ORDER BY p.WorkDate DESC;
+//4
+-- שאילתא בתוך שאילתא. משמשת בתור "מספר" בתוך התנאי. השוואת רשימה לערך ע"י שאילתא
+SELECT *
+FROM Production_Log
+WHERE Units_Produced > (SELECT AVG(Units_Produced) FROM Production_Log);
+//5
 --  סיכום ייצור, אחוז פגומים ודירוג איכות
 SELECT 
     M.ModelName, 
@@ -24,7 +35,7 @@ FROM Machines M
 JOIN Production_Log P ON M.MachineID = P.MachineID
 GROUP BY M.MachineID, M.ModelName
 ORDER BY Total_Produced DESC;
-//3+
+//5+
 -- הדוח הקודם פלוס סיווג המכונה לפי אחוזיפגומים (שימוש ב case)
 SELECT 
     M.ModelName, 
@@ -43,6 +54,19 @@ FROM Machines M
 JOIN Production_Log P ON M.MachineID = P.MachineID
 GROUP BY M.MachineID, M.ModelName
 ORDER BY Total_Produced DESC;
-
-
+//6
+טבלה זמנית, פונק לאג
+WITH ShiftHistory AS (
+    SELECT 
+        MachineID,
+        Units_Produced AS Current_Shift,
+        LAG(Units_Produced, 1) OVER(PARTITION BY MachineID ORDER BY ShiftID) AS Prev_1,
+        LAG(Units_Produced, 2) OVER(PARTITION BY MachineID ORDER BY ShiftID) AS Prev_2
+    FROM Production_Log
+)
+SELECT DISTINCT MachineID
+FROM ShiftHistory
+WHERE Current_Shift > 100 
+  AND Prev_1 > 100 
+  AND Prev_2 > 100;
 
